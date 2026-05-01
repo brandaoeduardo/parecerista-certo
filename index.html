@@ -327,18 +327,42 @@ const EDITAIS = {
   fac: { nome: 'FAC — Fundo de Apoio à Cultura DF 2025', texto: `FAC — FUNDO DE APOIO À CULTURA DF 2025\nObjeto: Apoio a projetos culturais do Distrito Federal em todas as linguagens artísticas.\nValor: até R$ 50.000. Requisitos: domicílio no DF, CPF ou CNPJ, sem restrição de linguagem.\nCritérios: Impacto territorial e nas RAs periféricas (35pts), Acessibilidade e gratuidade (30pts), Envolvimento comunitário (35pts).\nDocumentação simplificada. Resultado em 45 dias.` }
 };
 
-let state = { projText: '', editalText: '', editalNome: '' };
+let state = { projText: '', projPdfBase64: null, editalText: '', editalNome: '' };
 
 function handleFile(type, input) {
   if (!input.files.length) return;
   const file = input.files[0];
   const drop = document.getElementById(type + '-drop');
-  drop.classList.add('filled');
-  document.getElementById(type + '-drop-label').textContent = file.name;
-  if (type === 'proj') {
-    state.projText = '[Arquivo: ' + file.name + '] — projeto enviado via upload.';
-    checkReady();
+
+  if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+    alert('Por enquanto só aceitamos PDF. Converta seu arquivo ou cole o texto abaixo.');
+    return;
   }
+
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Arquivo muito grande. Máximo 10MB.');
+    return;
+  }
+
+  drop.classList.add('filled');
+  document.getElementById(type + '-drop-label').textContent = '📄 ' + file.name + ' — lendo...';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result.split(',')[1];
+    if (type === 'proj') {
+      state.projPdfBase64 = base64;
+      state.projText = '[PDF: ' + file.name + ']';
+      document.getElementById('proj-drop-label').textContent = '📄 ' + file.name + ' — pronto!';
+      document.getElementById('proj-text').placeholder = 'PDF carregado: ' + file.name + '\nOu cole texto adicional aqui para complementar...';
+      checkReady();
+    }
+  };
+  reader.onerror = function() {
+    alert('Erro ao ler o arquivo. Tente novamente ou cole o texto abaixo.');
+    drop.classList.remove('filled');
+  };
+  reader.readAsDataURL(file);
 }
 
 function dragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('active'); }
@@ -378,15 +402,17 @@ function checkReady() {
   const et = document.getElementById('edital-text');
   if (et.style.display !== 'none') state.editalText = et.value.trim();
 
-  const ready = state.projText.length > 30;
+  const ready = state.projText.length > 30 || state.projPdfBase64;
   document.getElementById('btn-analyze').disabled = !ready;
   const msg = document.getElementById('ready-msg');
   if (ready) {
     msg.className = 'ready-msg ok';
-    msg.textContent = state.editalText ? 'Projeto + edital prontos' : 'Projeto pronto — adicionar edital melhora a análise';
+    msg.textContent = state.projPdfBase64
+      ? (state.editalText ? 'PDF + edital prontos' : 'PDF carregado — adicionar edital melhora a análise')
+      : (state.editalText ? 'Projeto + edital prontos' : 'Projeto pronto — adicionar edital melhora a análise');
   } else {
     msg.className = 'ready-msg';
-    msg.textContent = 'Preencha o projeto para continuar';
+    msg.textContent = 'Envie o PDF ou cole o texto do projeto para continuar';
   }
 }
 
@@ -414,7 +440,8 @@ function updateAnStep(msgIdx) {
 }
 
 async function startAnalysis() {
-  state.projText = document.getElementById('proj-text').value.trim() || state.projText;
+  const pt = document.getElementById('proj-text').value.trim();
+  if (pt) state.projText = pt;
   if (document.getElementById('edital-text').style.display !== 'none') {
     state.editalText = document.getElementById('edital-text').value.trim();
   }
@@ -427,10 +454,17 @@ async function startAnalysis() {
   }, 1600);
 
   try {
+    const body = {
+      projeto: state.projText,
+      edital: state.editalText,
+      editalNome: state.editalNome
+    };
+    if (state.projPdfBase64) body.projetoPdfBase64 = state.projPdfBase64;
+
     const res = await fetch('/api/analisar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projeto: state.projText, edital: state.editalText, editalNome: state.editalNome })
+      body: JSON.stringify(body)
     });
     clearInterval(iv);
     if (!res.ok) throw new Error('API error ' + res.status);
@@ -556,7 +590,7 @@ function renderError(msg) {
 }
 
 function resetApp() {
-  state = { projText: '', editalText: '', editalNome: '' };
+  state = { projText: '', projPdfBase64: null, editalText: '', editalNome: '' };
   document.getElementById('proj-text').value = '';
   document.getElementById('edital-text').value = '';
   document.getElementById('edital-text').style.display = 'none';
