@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parecerista — Análise de Projetos Culturais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --green-border: #5DCAA5;
+    --amber: #EF9F27;
+    --amber-light: #FAEEDA;
+    --amber-border: #FAC775;
+    --amber-dark: #854F0B;
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --red-border: #F09595;
+    --red-dark: #A32D2D;
+    --blue: #378ADD;
+    --blue-light: #E6F1FB;
+    --blue-border: #85B7EB;
+    --blue-dark: #185FA5;
+    --purple-light: #EEEDFE;
+    --purple: #7F77DD;
+    --bg: #ffffff;
+    --bg-secondary: #f7f7f5;
+    --border: rgba(0,0,0,0.1);
+    --border-md: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --text-secondary: #555550;
+    --text-tertiary: #999990;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --bg-secondary: #242422;
+      --border: rgba(255,255,255,0.1);
+      --border-md: rgba(255,255,255,0.18);
+      --text: #f0ede8;
+      --text-secondary: #aaa9a0;
+      --text-tertiary: #666660;
+      --green-light: #0a2e1f;
+      --amber-light: #2e1e05;
+      --red-light: #2e0a0a;
+      --blue-light: #0a1a2e;
+    }
+  }
+
+  html { font-size: 16px; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .app { max-width: 900px; margin: 0 auto; padding: 0 1rem 4rem; }
+
+  /* HEADER */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 0; border-bottom: 0.5px solid var(--border); margin-bottom: 2rem; }
+  .logo { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 32px; height: 32px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 17px; height: 17px; stroke: #fff; stroke-width: 2; fill: none; }
+  .logo-sub { font-size: 13px; font-weight: 400; color: var(--text-tertiary); }
+  .btn-ghost { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 7px 16px; border-radius: var(--radius); border: 0.5px solid var(--border-md); background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+  .btn-ghost:hover { background: var(--bg-secondary); }
+
+  /* STEPS */
+  .steps { display: flex; align-items: center; gap: 0; margin-bottom: 2rem; }
+  .step { display: flex; align-items: center; gap: 8px; padding: 0.75rem 0; font-size: 13px; color: var(--text-tertiary); border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+  .step.active { color: var(--green-dark); border-bottom-color: var(--green); font-weight: 500; }
+  .step.done { color: var(--text-secondary); }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+  .step.done .step-num { background: var(--green); border-color: var(--green); color: #fff; }
+  .step-arrow { color: var(--border-md); font-size: 16px; padding: 0 8px; }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* UPLOAD GRID */
+  .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  @media (max-width: 600px) { .upload-grid { grid-template-columns: 1fr; } }
+
+  .upload-card { border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .uc-head { padding: 0.85rem 1.1rem; background: var(--bg-secondary); border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .uc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .uc-dot.proj { background: var(--purple); }
+  .uc-dot.edit { background: var(--blue); }
+  .uc-head-title { font-size: 13px; font-weight: 500; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-left: auto; }
+  .badge-red { background: var(--red-light); color: var(--red-dark); }
+  .badge-blue { background: var(--blue-light); color: var(--blue-dark); }
+  .uc-body { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 8px; }
+
+  .drop-zone { border: 1.5px dashed var(--border-md); border-radius: var(--radius); padding: 1.25rem 1rem; text-align: center; cursor: pointer; transition: all 0.15s; font-size: 12px; color: var(--text-tertiary); }
+  .drop-zone:hover, .drop-zone.active { border-color: var(--green); color: var(--green-dark); background: var(--green-light); }
+  .drop-zone svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.5; fill: none; display: block; margin: 0 auto 6px; }
+  .drop-zone.filled { border-style: solid; border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+
+  .divider-or { text-align: center; font-size: 11px; color: var(--text-tertiary); position: relative; }
+  .divider-or::before, .divider-or::after { content: ''; position: absolute; top: 50%; width: 40%; height: 0.5px; background: var(--border); }
+  .divider-or::before { left: 0; }
+  .divider-or::after { right: 0; }
+
+  textarea { width: 100%; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text); background: var(--bg-secondary); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px; resize: vertical; min-height: 100px; outline: none; line-height: 1.6; transition: border-color 0.15s; }
+  textarea:focus { border-color: var(--green); }
+  textarea::placeholder { color: var(--text-tertiary); font-size: 11px; }
+
+  .edital-options { display: flex; flex-direction: column; gap: 5px; }
+  .edital-opt { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 0.5px solid var(--border); border-radius: var(--radius); cursor: pointer; font-size: 12px; transition: all 0.15s; color: var(--text-secondary); }
+  .edital-opt:hover { border-color: var(--green); color: var(--green-dark); background: var(--green-light); }
+  .edital-opt.selected { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+  .edital-opt input { accent-color: var(--green); }
+
+  /* BOTÕES */
+  .btn-primary { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 11px 28px; border-radius: var(--radius); border: none; background: var(--green); color: #fff; cursor: pointer; transition: background 0.15s; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-primary:disabled { background: var(--border-md); color: var(--text-tertiary); cursor: not-allowed; }
+  .btn-primary svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 2; fill: none; }
+
+  /* ANALYZING */
+  .analyzing-screen { text-align: center; padding: 4rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+  .spinner { width: 52px; height: 52px; border-radius: 50%; border: 2.5px solid var(--border); border-top-color: var(--green); animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .an-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+  .an-msg { font-size: 13px; color: var(--text-secondary); }
+  .an-steps-list { display: flex; flex-direction: column; gap: 8px; text-align: left; width: 300px; margin-top: 4px; }
+  .an-step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-tertiary); }
+  .an-step.s-done { color: var(--green); }
+  .an-step.s-active { color: var(--text); font-weight: 500; }
+  .an-step-dot { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .an-step-dot svg { width: 9px; height: 9px; stroke: currentColor; stroke-width: 2.5; fill: none; }
+
+  /* RESULTADO */
+  .result-head { margin-bottom: 1.5rem; }
+  .result-head h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; line-height: 1.2; margin-bottom: 4px; }
+  .result-head p { font-size: 13px; color: var(--text-secondary); }
+
+  .score-hero { background: var(--bg-secondary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.25rem; }
+  .score-ring { width: 80px; height: 80px; flex-shrink: 0; position: relative; }
+  .score-ring svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--border-md); stroke-width: 5; }
+  .ring-fill { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); }
+  .ring-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; }
+  .score-text {}
+  .score-label { font-size: 16px; font-weight: 500; margin-bottom: 5px; }
+  .score-parecer { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+  .section-label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+
+  .dims-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.5rem; }
+  @media (max-width: 500px) { .dims-grid { grid-template-columns: 1fr 1fr; } }
+  .dim-card { background: var(--bg-secondary); border-radius: var(--radius); padding: 10px 12px; }
+  .dim-name { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
+  .dim-bar { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 5px; }
+  .dim-fill { height: 100%; border-radius: 4px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+  .dim-val { font-size: 14px; font-weight: 500; }
+
+  .parecer-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+  .parecer-item { border-radius: var(--radius); padding: 11px 13px; display: flex; gap: 10px; align-items: flex-start; }
+  .parecer-item.positivo { background: var(--green-light); border: 0.5px solid var(--green-border); }
+  .parecer-item.critico { background: var(--red-light); border: 0.5px solid var(--red-border); }
+  .parecer-item.atencao { background: var(--amber-light); border: 0.5px solid var(--amber-border); }
+  .parecer-item.melhoria { background: var(--blue-light); border: 0.5px solid var(--blue-border); }
+  .pi-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; }
+  .positivo .pi-dot { background: var(--green); }
+  .critico .pi-dot { background: var(--red); }
+  .atencao .pi-dot { background: var(--amber); }
+  .melhoria .pi-dot { background: var(--blue); }
+  .pi-dot svg { width: 10px; height: 10px; stroke: #fff; stroke-width: 2.5; fill: none; }
+  .pi-tag { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .positivo .pi-tag { color: var(--green-dark); }
+  .critico .pi-tag { color: var(--red-dark); }
+  .atencao .pi-tag { color: var(--amber-dark); }
+  .melhoria .pi-tag { color: var(--blue-dark); }
+  .pi-text { font-size: 13px; line-height: 1.55; color: var(--text); }
+
+  .conform-box { border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 1.5rem; }
+  .cb-head { padding: 10px 14px; background: var(--bg-secondary); border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .cb-head-title { font-size: 13px; font-weight: 500; }
+  .cb-head-score { font-size: 13px; font-weight: 500; }
+  .cb-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 14px; border-bottom: 0.5px solid var(--border); font-size: 13px; line-height: 1.5; }
+  .cb-row:last-child { border-bottom: none; }
+  .cb-icon { width: 17px; height: 17px; border-radius: 3px; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; }
+  .cb-icon.ok { background: var(--green); }
+  .cb-icon.nok { background: var(--red); }
+  .cb-icon.warn { background: var(--amber); }
+  .cb-icon svg { width: 9px; height: 9px; stroke: #fff; stroke-width: 2.5; fill: none; }
+  .cb-text { color: var(--text-secondary); }
+  .cb-text strong { color: var(--text); font-weight: 500; }
+
+  .passos-list { background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+  .passo-row { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+  .passo-num { width: 22px; height: 22px; border-radius: 50%; background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
+
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .action-btn { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 9px 16px; border-radius: var(--radius); border: 0.5px solid var(--border-md); background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+  .action-btn:hover { background: var(--bg-secondary); color: var(--text); }
+  .action-btn.green { background: var(--green); border-color: var(--green); color: #fff; }
+  .action-btn.green:hover { background: var(--green-dark); }
+
+  .disclaimer { font-size: 12px; color: var(--text-tertiary); line-height: 1.6; padding: 12px 14px; background: var(--bg-secondary); border-radius: var(--radius); border-left: 3px solid var(--border-md); border-radius: 0; }
+
+  .ready-msg { font-size: 13px; color: var(--text-tertiary); }
+  .ready-msg.ok { color: var(--green-dark); }
+
+  .toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+  .error-box { background: var(--red-light); border: 0.5px solid var(--red-border); border-radius: var(--radius-lg); padding: 1.5rem; text-align: center; color: var(--red-dark); }
+  .error-box p { margin-bottom: 1rem; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg>
+      </div>
+      Parecerista
+      <span class="logo-sub">— análise de projetos culturais</span>
+    </div>
+    <button class="btn-ghost" onclick="resetApp()">Nova análise</button>
+  </header>
+
+  <div class="steps">
+    <div class="step active" id="step-1-tab"><div class="step-num">1</div> Enviar documentos</div>
+    <span class="step-arrow">›</span>
+    <div class="step" id="step-2-tab"><div class="step-num">2</div> Analisando</div>
+    <span class="step-arrow">›</span>
+    <div class="step" id="step-3-tab"><div class="step-num">3</div> Parecer</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="view active" id="view-1">
+    <div style="margin-bottom:1.5rem;">
+      <h2 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;">Envie os documentos para análise</h2>
+      <p style="font-size:13px;color:var(--text-secondary);">Cole o texto do seu projeto e, se quiser, o edital ao qual vai se inscrever. A IA vai atuar como parecerista especializado e gerar uma avaliação completa.</p>
+    </div>
+
+    <div class="upload-grid">
+      <div class="upload-card">
+        <div class="uc-head">
+          <div class="uc-dot proj"></div>
+          <span class="uc-head-title">Projeto cultural</span>
+          <span class="badge badge-red">obrigatório</span>
+        </div>
+        <div class="uc-body">
+          <div class="drop-zone" id="proj-drop" onclick="document.getElementById('proj-file').click()" ondragover="dragOver(event,'proj-drop')" ondragleave="dragLeave('proj-drop')" ondrop="dropFile(event,'proj')">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <span id="proj-drop-label">Clique ou arraste PDF / DOCX / TXT</span>
+          </div>
+          <input type="file" id="proj-file" accept=".pdf,.doc,.docx,.txt" style="display:none" onchange="handleFile('proj', this)">
+          <div class="divider-or">ou</div>
+          <textarea id="proj-text" placeholder="Cole aqui o texto completo do seu projeto: apresentação, justificativa, objetivos, metodologia, cronograma, orçamento..." rows="6" oninput="checkReady()"></textarea>
+        </div>
+      </div>
+
+      <div class="upload-card">
+        <div class="uc-head">
+          <div class="uc-dot edit"></div>
+          <span class="uc-head-title">Edital / regulamento</span>
+          <span class="badge badge-blue">recomendado</span>
+        </div>
+        <div class="uc-body">
+          <p style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px;">Selecione um exemplo ou cole o texto do seu edital:</p>
+          <div class="edital-options" id="edital-opts">
+            <label class="edital-opt" id="eopt-proac">
+              <input type="radio" name="edital" value="proac" onchange="selectEdital('proac')"> ProAC Artes Cênicas — SP 2025
+            </label>
+            <label class="edital-opt" id="eopt-funarte">
+              <input type="radio" name="edital" value="funarte" onchange="selectEdital('funarte')"> Funarte Música Brasileira 2025
+            </label>
+            <label class="edital-opt" id="eopt-fac">
+              <input type="radio" name="edital" value="fac" onchange="selectEdital('fac')"> FAC — Fundo de Apoio à Cultura DF
+            </label>
+            <label class="edital-opt" id="eopt-proprio">
+              <input type="radio" name="edital" value="proprio" onchange="selectEdital('proprio')"> Colar texto do meu edital
+            </label>
+          </div>
+          <textarea id="edital-text" placeholder="Cole aqui o texto completo do edital..." rows="4" style="display:none;" oninput="checkReady()"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <span class="ready-msg" id="ready-msg">Preencha o projeto para continuar</span>
+      <button class="btn-primary" id="btn-analyze" onclick="startAnalysis()" disabled>
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Analisar com IA
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="view" id="view-2">
+    <div class="analyzing-screen">
+      <div class="spinner"></div>
+      <div class="an-title">Parecerista analisando seu projeto...</div>
+      <div class="an-msg" id="an-msg">Lendo a estrutura do projeto</div>
+      <div class="an-steps-list">
+        <div class="an-step s-active" id="an-s1"><div class="an-step-dot"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor"/></svg></div> Lendo e estruturando o projeto</div>
+        <div class="an-step" id="an-s2"><div class="an-step-dot"></div> Avaliando critérios técnicos e artísticos</div>
+        <div class="an-step" id="an-s3"><div class="an-step-dot"></div> Verificando conformidade com o edital</div>
+        <div class="an-step" id="an-s4"><div class="an-step-dot"></div> Calculando nota e redigindo parecer</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="view" id="view-3">
+    <div id="result-container"></div>
+  </div>
+
+</div>
+
+<script>
+const EDITAIS = {
+  proac: { nome: 'ProAC Artes Cênicas 2025', texto: `EDITAL ProAC ARTES CÊNICAS 2025 — SECRETARIA DE CULTURA DO ESTADO DE SP\nObjeto: Apoio a projetos de teatro e dança contemporânea. Valor: até R$ 80.000.\nRequisitos: CNPJ ativo há 2+ anos, domicílio em SP, regularidade fiscal (certidões negativas municipais, estaduais e federais).\nDocumentação: formulário online, plano de trabalho, orçamento com 3 cotações, currículo artístico, certidões negativas, declaração de não acúmulo.\nCritérios (100 pts): Mérito artístico e inovação (40pts), Viabilidade técnica e financeira (25pts), Trajetória do grupo (20pts), Alcance de público (15pts).\nVedações: grupos que receberam ProAC nos últimos 24 meses pelo mesmo mecanismo.\nPrazo de execução: 12 meses. Prestação de contas: 60 dias após encerramento.` },
+  funarte: { nome: 'Funarte Música Brasileira 2025', texto: `FUNARTE MÚSICA BRASILEIRA 2025\nObjeto: Produção fonográfica e circulação de grupos musicais em todas as linguagens. Valor: até R$ 150.000.\nRequisitos: CNPJ, regularidade fiscal, proposta com impacto regional. Prioridade para regiões Norte e Nordeste.\nCritérios: Diversidade regional (30pts), Qualidade artística (35pts), Impacto comunitário (20pts), Contrapartida social (15pts).\nProcesso em duas fases: pré-projeto e projeto completo. Documentação: projeto, orçamento, currículo, certidões.` },
+  fac: { nome: 'FAC — Fundo de Apoio à Cultura DF 2025', texto: `FAC — FUNDO DE APOIO À CULTURA DF 2025\nObjeto: Apoio a projetos culturais do Distrito Federal em todas as linguagens artísticas.\nValor: até R$ 50.000. Requisitos: domicílio no DF, CPF ou CNPJ, sem restrição de linguagem.\nCritérios: Impacto territorial e nas RAs periféricas (35pts), Acessibilidade e gratuidade (30pts), Envolvimento comunitário (35pts).\nDocumentação simplificada. Resultado em 45 dias.` }
+};
+
+let state = { projText: '', editalText: '', editalNome: '' };
+
+function handleFile(type, input) {
+  if (!input.files.length) return;
+  const file = input.files[0];
+  const drop = document.getElementById(type + '-drop');
+  drop.classList.add('filled');
+  document.getElementById(type + '-drop-label').textContent = file.name;
+  if (type === 'proj') {
+    state.projText = '[Arquivo: ' + file.name + '] — projeto enviado via upload.';
+    checkReady();
+  }
+}
+
+function dragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('active'); }
+function dragLeave(id) { document.getElementById(id).classList.remove('active'); }
+function dropFile(e, type) {
+  e.preventDefault();
+  dragLeave(type + '-drop');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const input = document.getElementById(type + '-file');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    handleFile(type, input);
+  }
+}
+
+function selectEdital(val) {
+  document.querySelectorAll('.edital-opt').forEach(o => o.classList.remove('selected'));
+  document.getElementById('eopt-' + val).classList.add('selected');
+  const ta = document.getElementById('edital-text');
+  if (val === 'proprio') {
+    ta.style.display = 'block';
+    state.editalText = '';
+    state.editalNome = 'edital do proponente';
+  } else {
+    ta.style.display = 'none';
+    state.editalText = EDITAIS[val].texto;
+    state.editalNome = EDITAIS[val].nome;
+  }
+  checkReady();
+}
+
+function checkReady() {
+  const pt = document.getElementById('proj-text').value.trim();
+  if (pt) state.projText = pt;
+  const et = document.getElementById('edital-text');
+  if (et.style.display !== 'none') state.editalText = et.value.trim();
+
+  const ready = state.projText.length > 30;
+  document.getElementById('btn-analyze').disabled = !ready;
+  const msg = document.getElementById('ready-msg');
+  if (ready) {
+    msg.className = 'ready-msg ok';
+    msg.textContent = state.editalText ? 'Projeto + edital prontos' : 'Projeto pronto — adicionar edital melhora a análise';
+  } else {
+    msg.className = 'ready-msg';
+    msg.textContent = 'Preencha o projeto para continuar';
+  }
+}
+
+const AN_MSGS = ['Lendo a estrutura do projeto...','Identificando pontos fortes e lacunas...','Avaliando coerência entre objetivos e metodologia...','Verificando orçamento e viabilidade financeira...','Cruzando com critérios do edital...','Calculando nota estimada...','Redigindo parecer...'];
+
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('view-'+i).className = 'view' + (i===n?' active':'');
+    const tab = document.getElementById('step-'+i+'-tab');
+    tab.className = 'step' + (i===n?' active':i<n?' done':'');
+    const num = tab.querySelector('.step-num');
+    if (i < n) num.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    else num.textContent = i;
+  });
+}
+
+function updateAnStep(msgIdx) {
+  const si = Math.floor(msgIdx / 1.8);
+  ['an-s1','an-s2','an-s3','an-s4'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (i < si) el.className = 'an-step s-done';
+    else if (i === si) el.className = 'an-step s-active';
+    else el.className = 'an-step';
+  });
+}
+
+async function startAnalysis() {
+  state.projText = document.getElementById('proj-text').value.trim() || state.projText;
+  if (document.getElementById('edital-text').style.display !== 'none') {
+    state.editalText = document.getElementById('edital-text').value.trim();
+  }
+  setStep(2);
+  let mi = 0;
+  const iv = setInterval(() => {
+    mi = Math.min(mi + 1, AN_MSGS.length - 1);
+    document.getElementById('an-msg').textContent = AN_MSGS[mi];
+    updateAnStep(mi);
+  }, 1600);
+
+  try {
+    const res = await fetch('/api/analisar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projeto: state.projText, edital: state.editalText, editalNome: state.editalNome })
+    });
+    clearInterval(iv);
+    if (!res.ok) throw new Error('API error ' + res.status);
+    const data = await res.json();
+    renderResult(data);
+  } catch(e) {
+    clearInterval(iv);
+    renderError(e.message);
+  }
+}
+
+function colorForNota(n) {
+  return n >= 75 ? '#1D9E75' : n >= 55 ? '#EF9F27' : '#E24B4A';
+}
+
+function renderResult(r) {
+  setStep(3);
+  const nota = Math.round(r.nota_geral || 0);
+  const cor = colorForNota(nota);
+  const circ = Math.PI * 2 * 32;
+  const offset = circ - (nota / 100) * circ;
+
+  const dimsHtml = (r.dimensoes || []).map(d => {
+    const c = colorForNota(d.nota);
+    return `<div class="dim-card">
+      <div class="dim-name">${d.nome}</div>
+      <div class="dim-bar"><div class="dim-fill" style="width:0%;background:${c}" data-target="${d.nota}%"></div></div>
+      <div class="dim-val" style="color:${c}">${Math.round(d.nota)}</div>
+    </div>`;
+  }).join('');
+
+  const iconSvg = {
+    positivo: '<polyline points="20 6 9 17 4 12"/>',
+    critico: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    atencao: '<path d="M12 9v4M12 17h.01"/>',
+    melhoria: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'
+  };
+
+  const itensHtml = (r.itens || []).map(it => `
+    <div class="parecer-item ${it.tipo}">
+      <div class="pi-dot"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">${iconSvg[it.tipo]||''}</svg></div>
+      <div><div class="pi-tag">${it.tag}</div><div class="pi-text">${it.texto}</div></div>
+    </div>`).join('');
+
+  let conformHtml = '';
+  if (r.conformidade && Array.isArray(r.conformidade)) {
+    const cbRows = r.conformidade.map(c => {
+      const ico = c.status==='ok' ? '<polyline points="20 6 9 17 4 12"/>' : c.status==='nok' ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' : '<path d="M12 9v4M12 17h.01"/>';
+      return `<div class="cb-row">
+        <div class="cb-icon ${c.status}"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">${ico}</svg></div>
+        <div class="cb-text"><strong>${c.criterio}</strong> — ${c.obs}</div>
+      </div>`;
+    }).join('');
+    const cs = Math.round(r.conformidade_score || 0);
+    conformHtml = `
+      <div class="section-label" style="margin-top:1.5rem;">Conformidade com o edital — ${state.editalNome}</div>
+      <div class="conform-box">
+        <div class="cb-head">
+          <span class="cb-head-title">Verificação de critérios e regras</span>
+          <span class="cb-head-score" style="color:${colorForNota(cs)}">${cs}% de conformidade</span>
+        </div>
+        ${cbRows}
+      </div>`;
+  }
+
+  const passosHtml = (r.proximos_passos || []).map((p,i) =>
+    `<div class="passo-row"><div class="passo-num">${i+1}</div><span>${p}</span></div>`
+  ).join('');
+
+  document.getElementById('result-container').innerHTML = `
+    <div class="result-head">
+      <h1>${r.titulo_projeto || 'Seu projeto'}</h1>
+      <p>Parecer gerado por IA · simulação de avaliação por banca especializada</p>
+    </div>
+
+    <div class="score-hero">
+      <div class="score-ring">
+        <svg viewBox="0 0 80 80">
+          <circle class="ring-bg" cx="40" cy="40" r="32"/>
+          <circle class="ring-fill" cx="40" cy="40" r="32" stroke="${cor}" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${circ.toFixed(2)}" id="ring-fill-anim"/>
+        </svg>
+        <div class="ring-num" style="color:${cor}">${nota}</div>
+      </div>
+      <div class="score-text">
+        <div class="score-label">${r.nota_label || ''}</div>
+        <div class="score-parecer">${r.parecer_geral || ''}</div>
+      </div>
+    </div>
+
+    <div class="section-label">Avaliação por dimensão</div>
+    <div class="dims-grid">${dimsHtml}</div>
+
+    <div class="section-label">Parecer detalhado</div>
+    <div class="parecer-list">${itensHtml}</div>
+
+    ${conformHtml}
+
+    <div class="section-label" style="margin-top:${r.conformidade?'0':'1.5rem'};">Próximos passos</div>
+    <div class="passos-list">${passosHtml}</div>
+
+    <div class="actions">
+      <button class="action-btn green" onclick="window.print()">Imprimir / salvar PDF</button>
+      <button class="action-btn" onclick="resetApp()">Nova análise</button>
+    </div>
+
+    <div class="disclaimer">Esta análise é uma simulação gerada por inteligência artificial com base em critérios típicos de editais culturais brasileiros. Não substitui a avaliação oficial de uma banca examinadora. Use como ferramenta de autoavaliação e melhoria antes da submissão do projeto.</div>
+  `;
+
+  setTimeout(() => {
+    const ring = document.getElementById('ring-fill-anim');
+    if (ring) ring.style.strokeDashoffset = offset.toFixed(2);
+    document.querySelectorAll('.dim-fill[data-target]').forEach(el => { el.style.width = el.dataset.target; });
+  }, 100);
+}
+
+function renderError(msg) {
+  setStep(3);
+  document.getElementById('result-container').innerHTML = `
+    <div class="error-box">
+      <p><strong>Erro ao conectar com a IA</strong><br>${msg || 'Verifique sua conexão e tente novamente.'}</p>
+      <button class="btn-ghost" onclick="resetApp()">Tentar novamente</button>
+    </div>`;
+}
+
+function resetApp() {
+  state = { projText: '', editalText: '', editalNome: '' };
+  document.getElementById('proj-text').value = '';
+  document.getElementById('edital-text').value = '';
+  document.getElementById('edital-text').style.display = 'none';
+  document.getElementById('proj-drop').className = 'drop-zone';
+  document.getElementById('proj-drop-label').textContent = 'Clique ou arraste PDF / DOCX / TXT';
+  document.querySelectorAll('.edital-opt').forEach(o => o.classList.remove('selected'));
+  document.querySelectorAll('input[name=edital]').forEach(r => r.checked = false);
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('ready-msg').className = 'ready-msg';
+  document.getElementById('ready-msg').textContent = 'Preencha o projeto para continuar';
+  setStep(1);
+}
+</script>
+</body>
+</html>
